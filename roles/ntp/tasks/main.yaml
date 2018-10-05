@@ -1,0 +1,12 @@
+---
+- name: ntp package installation
+  apt: name={{ item }} update_cache=yes state=latest
+  with_items:
+    - ntp
+- cron:
+    name: "ntp"
+    special_time: daily
+    user: ubuntu
+    job: sudo service ntp restart >> /tmp/time.log
+  notify:
+        - restart ntp

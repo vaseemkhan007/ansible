@@ -1,0 +1,95 @@
+global
+	log /dev/log    local0
+   	log /dev/log    local1 notice
+	user haproxy
+	group haproxy
+	maxconn 50000
+	tune.ssl.default-dh-param 2048
+	daemon
+
+defaults
+	log     global
+	mode    http
+	option  httplog
+	option httpclose
+	option  dontlognull
+	maxconn 50000
+	retries 3
+	option redispatch
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+    #errorfile 400 /etc/haproxy/errors/400.http
+    #errorfile 403 /etc/haproxy/errors/403.http
+    #errorfile 408 /etc/haproxy/errors/408.http
+    #errorfile 500 /etc/haproxy/errors/500.http
+    #errorfile 502 /etc/haproxy/errors/502.http
+    #errorfile 503 /etc/haproxy/errors/503.http
+    #errorfile 504 /etc/haproxy/errors/504.http
+
+
+frontend node1-https
+	bind {{ ansible_eth0.ipv4.address  }}:443 ssl crt /etc/ssl/carot-all-16-17.pem
+	mode http 
+	maxconn 50000
+	option httpclose
+    option forwardfor
+	reqadd X-Forwarded-Proto:\ https
+ 	acl hondaadmin  path_beg /admin_portal_honda 
+	acl admin  path_beg /admin_portal/
+	acl scheduler  path_beg /scheduler
+	acl api  path_beg /api
+	acl hondaadmin  path_beg /dealer_portal_honda
+	use_backend api-backend if api
+    	use_backend admin-backend if admin
+    	use_backend scheduler-backend if scheduler
+    	use_backend hadmin-dealer-backend if hondaadmin
+    	default_backend web
+
+frontend node1-http
+	bind {{ ansible_eth0.ipv4.address  }}:80
+	mode http
+	redirect scheme https code 301 if !{ ssl_fc }
+
+backend admin-backend
+	option httpclose
+	balance roundrobin
+        option http-server-close
+        cookie JSESSIONID prefix
+	server admin-sch1a {{ adminsch1a }}:8080 cookie A check 
+	#server admin-sch1b {{ ansible_eth0.ipv4.address  }}:8080 cookie B check 
+backend scheduler-backend
+        option httpclose
+        balance roundrobin
+        option http-server-close
+        cookie JSESSIONID prefix
+        server admin-sch1a {{ ansible_eth0.ipv4.address  }}:8080 cookie A check
+       
+backend web
+	balance roundrobin
+	option http-server-close
+        cookie JSESSIONID prefix
+	server web1a {{ ansible_eth0.ipv4.address  }}:8080  cookie A check
+	#server web1b {{ ansible_eth0.ipv4.address  }}:8080  cookie B check
+
+backend api-backend
+	option http-server-close
+	balance roundrobin
+	server api1a {{ ansible_eth0.ipv4.address  }}:8080 check 
+	#server api1b {{ ansible_eth0.ipv4.address  }}:8080 check
+
+backend hadmin-dealer-backend
+	option httpclose
+	balance roundrobin
+        option http-server-close
+        cookie JSESSIONID prefix
+	server hadmindealer1a {{ ansible_eth0.ipv4.address  }}:8080 cookie A check
+        #server hadmindealer1b {{ ansible_eth0.ipv4.address  }}:8080 cookie B check
+
+listen stats {{ ansible_eth0.ipv4.address  }}:1936
+	stats enable
+	stats uri /
+	stats hide-version
+	stats auth admin:admin123
+
+

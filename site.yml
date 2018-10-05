@@ -1,0 +1,39 @@
+---
+
+- name: Installing tomcat on app
+  hosts: app
+  remote_user: ubuntu
+  sudo: yes
+  roles:
+    - app
+  tags:
+    - app
+
+- name: Installing java
+  hosts: java
+  remote_user: ubuntu
+  become: true
+
+  roles:
+    - java
+  tags:
+    - java
+
+- name: Time service
+  hosts: ntp
+  remote_user: ubuntu
+  sudo: yes
+
+  roles:
+    - ntp
+  tags:
+    - ntp
+
+- name: Installing MySQL
+  hosts: mysql
+  remote_user: root
+
+  roles:
+    - mysql
+  tags:
+    - mysql

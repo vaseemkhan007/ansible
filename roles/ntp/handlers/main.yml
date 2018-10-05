@@ -1,0 +1,5 @@
+---
+# Handlers for Commons
+
+- name: restart ntp
+  service: name=ntp state=restarted

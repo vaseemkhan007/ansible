@@ -1,0 +1,10 @@
+---
+# The variables file used by the playbooks in the dbservers group.
+# These don't have to be explicitly imported by vars_files: they are autopopulated.
+
+iface: '{{ ansible_default_ipv4.interface }}'
+MySQL_root_pass: password
+mysqlservice: mysqld
+mysql_port: 3306
+dbuser: root
+dbname: dbtest

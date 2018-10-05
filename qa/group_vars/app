@@ -1,0 +1,13 @@
+---
+env: prod
+min: 1024
+max: 6144
+
+#####
+
+#Credentials
+
+db_host: proddb
+db_name: opsriver_prod
+jdbc_username: opsriver_prod
+jdbc_password: xxxxx

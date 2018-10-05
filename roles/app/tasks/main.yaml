@@ -1,0 +1,71 @@
+---
+- name: add group tomcat
+  group: name=tomcat
+  
+
+- name: add user tomcat
+  user: name=tomcat group=tomcat home=/home/tomcat createhome=yes
+  
+- name: Creating disk2 folder
+  file: path=/disk2/ owner=ubuntu group=ubuntu state=directory
+
+- name: Download Tomcat
+  get_url: url=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.45/bin/apache-tomcat-8.0.45.tar.gz dest=/opt/apache-tomcat-8.0.45.tar.gz
+  
+
+- name: Extract archive
+  command: chdir=/opt /bin/tar xvf /opt/apache-tomcat-8.0.45.tar.gz -C /disk2/ creates=/disk2/apache-tomcat-8.0.45
+  
+
+- name: Symlink install directory
+  file: src=/disk2/apache-tomcat-8.0.45 path=/disk2/tomcat state=link
+  notify:
+    - restart tomcat
+
+- name: Change ownership of Tomcat installation
+  file: path=/disk2/tomcat/ owner=tomcat group=tomcat state=directory recurse=yes
+  notify:
+    - restart tomcat
+- name: Creating log folder
+  file: path=/disk2/applogs/ owner=tomcat group=tomcat state=directory recurse=yes
+- name: Creating backup folder  
+  file: path=/disk2/backup owner=ubuntu group=ubuntu state=directory recurse=yes
+  file: path=/disk2/opsriver/invoices owner=tomcat group=tomcat state=directory recurse=yes
+
+
+- name: Install Tomcat init script
+  template: src=tomcat-init.sh.j2 dest=/etc/init.d/tomcat mode=0755
+  notify:
+    - restart tomcat
+
+- name: copy catalina.sh 
+  template: src=catalina.sh.j2 dest=/disk2/tomcat/bin/catalina.sh
+            owner=tomcat group=tomcat
+            mode=0755
+  notify:
+    - restart tomcat    
+
+- name: copy logback file
+  template: src=logback.j2 dest=/home/tomcat/logback-{{ env }}.xml
+            owner=tomcat group=tomcat
+            mode=0644
+  notify:
+    - restart tomcat        
+- name: Copy context file
+  template: src=context.j2 dest=/disk2/tomcat/conf/context.xml
+            owner=tomcat group=tomcat
+            mode=0644
+  notify:
+    - restart tomcat       
+
+- name: copy opsriver services properties
+  template: src=opsriver_services.properties.j2 dest=/home/tomcat/opsriver_services.properties mode=0644
+            owner=tomcat group=tomcat
+            mode=0644
+  notify:
+    - restart tomcat     
+
+- name: Start Tomcat
+  service: name=tomcat state=started enabled=yes
+  notify:
+    - restart tomcat

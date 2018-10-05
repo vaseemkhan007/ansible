@@ -1,0 +1,13 @@
+---
+# Handlers for NTP
+
+- name: restart ntp
+  service: name=haproxy state=restarted
+
+- name: reload haproxy
+  service: name=haproxy state=reloaded
+
+
+- name: restart nagios-nrpe-server
+  sudo: yes
+  service: name=nagios-nrpe-server state=restarted
